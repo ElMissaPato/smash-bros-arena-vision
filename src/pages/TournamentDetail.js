@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Clock from '../components/Clock';
 import TournamentBracket from '../components/TournamentBracket';
 import PlayerList from '../components/PlayerList';
+import StandingsTable from '../components/StandingsTable';
 import AddPlayerForm from '../components/AddPlayerForm';
 import MatchAnnouncement from '../components/MatchAnnouncement';
 import WinnerAnnouncement from '../components/WinnerAnnouncement';
@@ -38,6 +39,7 @@ const TournamentDetail = () => {
     if (pendingMatches.length > 0 && !announcementMatch) {
       setAnnouncementMatch(pendingMatches[0]);
       setShowAnnouncement(true);
+      setTimeout(() => window.playSoundEffect('match'), 500);
     }
     
     const completedMatches = tournamentMatches.filter(m => m.status === 'completed');
@@ -47,9 +49,10 @@ const TournamentDetail = () => {
       
     if (lastCompletedMatch && lastCompletedMatch.winnerId) {
       const winner = players.find(p => p.id === lastCompletedMatch.winnerId);
-      if (winner) {
+      if (winner && !winnerPlayer) {
         setWinnerPlayer(winner);
         setShowWinnerAnnouncement(true);
+        setTimeout(() => window.playSoundEffect('win'), 500);
       }
     }
   }, [tournamentMatches, players]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -79,11 +82,13 @@ const TournamentDetail = () => {
       return;
     }
     
+    window.playSoundEffect('start');
     startTournament(id);
     setRefreshKey(prev => prev + 1);
   };
   
   const handlePlayerAdded = () => {
+    window.playSoundEffect('select');
     setRefreshKey(prev => prev + 1);
     setShowAddPlayer(false);
   };
@@ -115,14 +120,17 @@ const TournamentDetail = () => {
       )}
       
       <div className="container mx-auto p-4">
-        <div className="bg-black/80 rounded-xl p-6 shadow-lg border-2 border-smash-yellow mb-6 animate-fadeIn">
+        <div className="bg-black/90 rounded-xl p-6 shadow-lg border-2 border-smash-yellow mb-6 animate-fadeIn">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-white font-game">{tournament.name}</h1>
             
             <div className="flex space-x-3">
               <button 
                 className="btn bg-smash-blue hover:bg-blue-700"
-                onClick={() => navigate('/admin/tournaments')}
+                onClick={() => {
+                  window.playSoundEffect('select');
+                  navigate('/admin/tournaments');
+                }}
               >
                 Volver
               </button>
@@ -160,7 +168,10 @@ const TournamentDetail = () => {
               {tournament.status === 'pending' && (
                 <button 
                   className="btn btn-primary"
-                  onClick={() => setShowAddPlayer(true)}
+                  onClick={() => {
+                    window.playSoundEffect('select');
+                    setShowAddPlayer(true);
+                  }}
                 >
                   Agregar Participante
                 </button>
@@ -184,12 +195,22 @@ const TournamentDetail = () => {
             </div>
           )}
           
+          {/* Tabla de posiciones - NUEVO */}
+          {tournament.status !== 'pending' && (
+            <div className="mb-8">
+              <StandingsTable 
+                tournamentId={id} 
+                players={players} 
+                matches={matches} 
+                key={refreshKey} 
+              />
+            </div>
+          )}
+          
           {/* Lista de participantes */}
           <div>
             <h2 className="text-2xl text-white font-bold mb-4 font-game">Participantes</h2>
-            <div className="bg-black/50 p-4 rounded-lg">
-              <PlayerList tournamentId={id} key={refreshKey} />
-            </div>
+            <PlayerList tournamentId={id} key={refreshKey} />
           </div>
           
           {/* Modal para agregar participante */}
@@ -204,7 +225,10 @@ const TournamentDetail = () => {
                 />
                 <button 
                   className="mt-4 btn btn-danger w-full"
-                  onClick={() => setShowAddPlayer(false)}
+                  onClick={() => {
+                    window.playSoundEffect('select');
+                    setShowAddPlayer(false);
+                  }}
                 >
                   Cancelar
                 </button>
